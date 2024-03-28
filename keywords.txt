@@ -1,0 +1,43 @@
+# Keywords coloring for BC7215 Arduino Library
+
+# Datatypes
+bc7215DataVarPkt_t	KEYWORD1
+bc7215DataMaxPkt_t	KEYWORD1
+bc7215FormatPkt_t	KEYWORD1
+
+# Class Name
+BC7215	KEYWORD1
+
+# Literals
+MOD_HIGH	LITERAL1
+MOD_LOW	LITERAL1
+BUSY_NC	LITERAL1
+BC7215_MAX_RX_DATA_SIZE	LITERAL1
+
+# Functions
+setTx	KEYWORD2
+setRx	KEYWORD2
+setRxMode	KEYWORD2
+setShutDown	KEYWORD2
+dataReady	KEYWORD2
+clrData	KEYWORD2
+getLen	KEYWORD2
+dpketSize	KEYWORD2
+getData	KEYWORD2
+getRaw	KEYWORD2
+formatReady	KEYWORD2
+clrFormat	KEYWORD2
+getFormat	KEYWORD2
+loadFormat	KEYWORD2
+irTx	KEYWORD2
+sendRaw	KEYWORD2
+cmdCompleted	KEYWORD2
+setC56K	KEYWORD2
+clrC56K	KEYWORD2
+setNOCA	KEYWORD2
+clrNOCA	KEYWORD2
+crc8	KEYWORD2
+calSize	KEYWORD2
+copyDpkt	KEYWORD2
+compareDpkt	KEYWORD2
+
