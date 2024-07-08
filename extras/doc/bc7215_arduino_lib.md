@@ -31,7 +31,7 @@ struct bc7215FormatPkt_t{
             byte c56k : 1;
             byte noCA : 1;
         } bits;
-        byte byte;
+        byte inByte;
     } signature;
     byte format[32];
 };
@@ -99,15 +99,11 @@ void setRx();
 
 Sets the BC7215's working mode to receive (infrared decoding) mode. The actual operation sets the MOD signal to high. If this function is called while the BC7215 is in the process of infrared transmission, the BC7215 may need to complete the transmission of the current infrared bits before switching to receive mode, which could take up to 20ms. Users should ensure that no other operations are performed on the BC7215 during this period.
 
-
-
 ```cpp
 void setTx();
 ```
 
 Sets the BC7215's working mode to transmit (infrared encoding) mode. The actual operation sets the MOD signal to low. After calling this function, it may take up to 2ms for the BC7215 chip to complete the mode switch. Users should ensure that no other operations are performed on the BC7215 during this period.
-
-
 
 ```cpp
 void setShutDown();
@@ -115,15 +111,11 @@ void setShutDown();
 
 In transmission mode, sets the BC7215 to shut down mode. After calling this function, the command F7 00 is sent to the BC7215. This function only takes effect in transmission mode. If called in receive mode, since the last data sent is 0x00, the BC7215's receive mode will switch to simple mode (for details, please refer to the BC7215 datasheet). After calling this function, users can query the command execution status with **cmdCompleted**().
 
-
-
 ```cpp
 void setRxMode(byte mode);
 ```
 
 In receive mode, sets the receiving decoding mode (for details, please refer to the BC7215 datasheet). The lowest two bits of `mode` determine the working mode after the command is executed.
-
-
 
 ### 2.Query Functions
 
@@ -144,8 +136,6 @@ If the reception function is disabled in the *library configuration file*, this 
 2. The `getData()` or `getRaw()` functions are called.
 
 3. The `clrData()` function is called to clear the data packet.
-   
-   
 
 ```cpp
 bool formatReady();
@@ -162,8 +152,6 @@ To obtain the raw data in such cases, BC7215 needs to be set to simple mode to r
 2. The `getFormat()` function is called.
 
 3. The `clrFormat()` function is called to clear the format packet.
-   
-   
 
 ```cpp
 bool cmdCompleted();
@@ -172,8 +160,6 @@ bool cmdCompleted();
 In transmission mode, queries whether a command has been completed. A return value of 1 (true) indicates that the command has been completed; 0 (false) indicates it has not. In receive mode, this function will always return 1.
 
 This can include transmission commands and shutdown commands. The BC7215 chip has an internal 16-byte reception buffer. Although the rate of infrared transmission is relatively low, for data amounts within 16 bytes, the transmission function will return almost immediately, but the actual data transmission process, completed by the BC7215 chip, takes longer. Sometimes users need to know when the transmission is complete, for example, to ensure a specific interval between two transmissions. This function can be used to query the completion time of the last transmission. The shutdown command executes immediately, and this function can query whether the BC7215 has entered the shutdown state. 
-
-
 
 ### 3. Reception-related Functions
 
@@ -187,8 +173,6 @@ The actual length of data copied by the `getData()` function corresponds to the 
 
 If the raw data packet is unavailable, the result will be 0. This function allows users to check the length of data before retrieving raw data to prevent memory overflow or to dynamically allocate memory. If the reception function is disabled in the library configuration, this function is not available.
 
-
-
 ```cpp
 word dpktSize();
 ```
@@ -196,8 +180,6 @@ word dpktSize();
 Gets the size of the received data packet in bytes. 
 
 This function is equivalent to the one that gets the bit length but returns the size of the entire data packet in bytes, saving users the efforts of conversion. Since the data packet length is determined by the infrared transmitter, it's possible to receive data exceeding expectations. Users can check the size of the data packet before retrieval to prevent memory overflow. If the reception function is disabled in the library configuration, this function is not available.
-
-
 
 ```cpp
 byte getData(bc7215DataMaxPkt_t& target);
@@ -211,8 +193,6 @@ If the data in the cache is no longer available (e.g., it has been overwritten b
 
 This function clears the `dataReady()` status. Users must ensure that the target size can accommodate the received data; executing this function with insufficient memory space for the data can lead to memory overflow and unpredictable consequences. Users should first use `getLen()` or `dpktSize()` to get the data length, allocate memory or check space size, then call this function. If the reception function is disabled in the library configuration, this function is not available.
 
-
-
 ```cpp
 word getRaw(void* addr, word size);
 ```
@@ -221,8 +201,6 @@ Function for retrieving the raw data from the received data packet.
 
 Similar to the above data packet reading function, but this function only reads out the raw payload data without the bit length information and can output to any address, making it more suitable for use in infrared communication. `size` is the number of bytes to read, which may not necessarily match the amount of data received; it can be less than or more than the actual number of bytes received. If `size` is less, it returns data up to the value of `size`; if `size` is more, it only reads out the actual number of bytes received. The return value is the actual number of bytes read. If the reception function is disabled in the library configuration, this function is not available.
 
-
-
 ```cpp
 byte getFormat(bc7215FormatPkt_t& target);
 ```
@@ -230,8 +208,6 @@ byte getFormat(bc7215FormatPkt_t& target);
 Function for reading the format data packet. 
 
 The input parameter is a variable of type `bc7215FormatPkt_t`. After executing the command, the received format data packet will be copied into this variable. The return value is the signature byte of the format data packet. If the data in the library cache is no longer available (e.g., it has been overwritten by new data), it will return 0xff. This function clears the `formatReady()` status. If the reception function is disabled in the library configuration, this function is not available.
-
-
 
 ### 4. Transmission-related Functions
 
@@ -243,8 +219,6 @@ Loads format data into the BC7215 chip.
 
 After calling this function, the format information data pointed to by `source` will be loaded into the BC7215 chip. If the transmission function is disabled in the library configuration, this function is not available.
 
-
-
 ```cpp
 void irTx(const bc7215DataMaxPkt_t& source);
 ```
@@ -253,8 +227,6 @@ Transmits infrared data. Calling this function will cause the BC7215 to transmit
 
 The format used for transmission is the last loaded format. If switching from receive to transmit mode without having loaded a format, the format of the last received infrared signal will be used. If the data to be transmitted is less than 16 bytes (128 bits), this function will return immediately after writing the data to the BC7215's internal buffer; if more than 16 bytes, it returns after the last 16 bytes are written to the buffer. The specific time required for infrared transmission depends on the infrared modulation format used, typically several ms per byte. The `cmdCompleted()` function can be used to query whether the infrared transmission is complete. If the transmission function is disabled in the configuration, this function is not available.
 
-
-
 ```cpp
 void sendRaw(const void* source, word size);
 ```
@@ -262,8 +234,6 @@ void sendRaw(const void* source, word size);
 Sends raw data. 
 
 Similar to `irTx()`, but `source` can be any type of data, not limited to the raw data packet format, with `size` being the number of bytes to be sent. This function is suitable for data communication.
-
-
 
 ### 5. Utility Functions
 
@@ -275,15 +245,11 @@ void BC7215::setC56K(bc7215FormatPkt_t& target);
 
 Sets the control bit of the format data packet feature byte. After setting, the C56K bit will be set, and after loading the data packet, BC7215 will use a 56K carrier for transmission.
 
-
-
 ```cpp
 void BC7215::clrC56K(bc7215FormatPkt_t& target);
 ```
 
 Clears the control bit of the format data packet feature byte. After setting, the C56K bit will be cleared (reset to default state), and after loading the data packet, BC7215 will use a 38K carrier for transmission.
-
-
 
 ```cpp
 void BC7215::setNOCA(bc7215FormatPkt_t& target);
@@ -291,15 +257,11 @@ void BC7215::setNOCA(bc7215FormatPkt_t& target);
 
 Sets the control bit of the format data packet feature byte. After setting, the NOCA bit will be set, and after loading the data packet, BC7215 output will not use a carrier, producing only high and low level outputs.
 
-
-
 ```cpp
 void BC7215::clrNOCA(bc7215FormatPkt_t& target);
 ```
 
 Clears the control bit of the format data packet feature byte. After setting, the NOCA bit will be cleared (reset to default state), and after loading the data packet, BC7215 will use a 38k or 56k carrier for output.
-
-
 
 ```cpp
 byte BC7215::crc8(byte* data, word len);
@@ -313,8 +275,6 @@ The function has two input parameters: a pointer to the data and the length of t
 
 The CRC calculation polynomial, default value is 0x07, defined in `bc7215_config.h`, can be modified by users as needed.
 
-
-
 ```cpp
 word BC7215::calSize(const bc7215DataMaxPkt_t& dataPkt);
 ```
@@ -322,8 +282,6 @@ word BC7215::calSize(const bc7215DataMaxPkt_t& dataPkt);
 Calculates the size of a data packet. 
 
 This function returns the size of the actual data packet in `dataPkt`, including both the raw data part and the bit length part, in bytes.
-
-
 
 ```cpp
 void BC7215::copyDpkt(void* target, bc7215DataMaxPkt_t& source);
@@ -333,8 +291,6 @@ Data packet copy function.
 
 This function copies the data packet from `source` to the address of `target`. The copy operation only copies the size of the actual data packet in `source`. It is worth noting that this function supports the overlap of `source` and `target`, which effectively moves the data packet, for example, `target`'s address can be just 1 byte different from `source`, equivalent to moving the data packet forward or backward by one byte in memory.
 
-
-
 ```cpp
 bool compareDpkt(byte sig, const bc7215DataMaxPkt_t& pkt1, const bc7215DataMaxPkt_t& pkt2);
 ```
@@ -343,39 +299,27 @@ Compares two data packets. This function compares whether the valid data in two 
 
 Infrared data may not end in a complete byte, and this function supports the comparison of incomplete bytes. Due to different encoding formats, data may be MSB-first or LSB-first, so the signature byte is needed to determine the data alignment. The function assumes the signature bytes of both packets are the same. If the two packets have different modulation methods, their data lengths and data are most likely different.
 
-
-
 ## Advanced Applications
 
  The driver library includes a configuration file `bc7215_config.h` located in the `libraries/bc7215/config` directory of the Arduino root directory. It defines some parameters related to this driver library. Advanced users can adjust these values according to their needs to better suit their projects. The main configuration parameters are as follows:
-
-
 
 `ENABLE_RECEIVING` 
 
 This parameter controls whether to enable the driver library's receiving / decoding processing function, including receiving data packets, receiving format packets, etc. This parameter defaults to `1`, which means enabled. If users do not need BC7215's receiving decoding function, it can be modified to `0`. Disabling the receiving function also makes related functions unavailable. Since the receiving decoding function occupies most of the required memory and program content, disabling it will significantly reduce the size and memory footprint of this driver library.
 
-
-
 `ENABLE_FORMAT` 
 
 Under the receiving function, there's a further control parameter for enabling the reception of format information. The default value is `1`, which means enabled. If not needed, it can be changed to `0`. Some applications, such as data communication, do not need to acquire format information of the infrared signal. In such cases, this function can be turned off, saving 33 bytes of RAM and some program space, as the format information packet is 33 bytes long.
 
-
-
 `ENABLE_TRANSMITTING` 
 
 This parameter controls whether to enable the infrared transmission-related functions, defaulting to `1` for enabled status. Changing it to `0` can disable these functions, saving some program space.
-
-
 
 `BC7215_MAX_RX_DATA_SIZE` 
 
 Represents the maximum length of  payload in a data packets that can be received, in bytes, ranging from 1 to 512. 
 
 In real world the actual length of data emitted by a remote controller, for audio-visual equipment, is generally within 8 bytes, and for air conditioners, generally within 32 bytes. The larger this defined value, the more memory the driver library will occupy.
-
-
 
 `BC7215_CRC8_POLY` 
 

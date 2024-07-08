@@ -175,7 +175,7 @@ byte BC7215::getFormat(bc7215FormatPkt_t& target)
     if (bc7215Status.formatPktReady)
     {
         signature = bufRead(startPos, 0);
-        target.signature.byte = signature;
+        target.signature.inByte = signature;
         for (i = 0; i < 32; i++)
         {
             target.format[i] = bufRead(startPos, i + 1);
@@ -312,14 +312,14 @@ void BC7215::clrNOCA(bc7215FormatPkt_t& formatPkt)
 	formatPkt.signature.bits.noCA = 0;
 }
 
-byte BC7215::crc8(byte* data, word len)
+byte BC7215::crc8(const void* data, word len)
 {
     word i;
     byte j;
     byte crc = 0;
     for (i = 0; i < len; ++i)
     {
-        crc ^= data[i];
+        crc ^= *(reinterpret_cast<const unsigned char*>(data) +i);
         for (j = 0; j < 8; ++j)
         {
             if (crc & 0x80)

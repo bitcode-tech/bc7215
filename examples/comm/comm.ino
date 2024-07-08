@@ -32,8 +32,8 @@
 #define USE_SERIAL_MONITOR        // Code will print running status to serial monitor
 
 // Pin connections
-const int MOD = 4;
-const int BUSY = 5;
+const int MOD_PIN = 4;
+const int BUSY_PIN = 5;
 const int BUTTON1 = 6;
 const int BUTTON2 = 7;
 const int LED2 = 8;
@@ -50,7 +50,7 @@ const uint8_t BinData[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 // ASCII string used for communication
 const char    TxtData[] = { "Hello World." };
 
-BC7215 irModule(IR_SERIAL, MOD, BUSY);        // define BC7215 connection
+BC7215 irModule(IR_SERIAL, MOD_PIN, BUSY_PIN);        // define BC7215 connection
 
 byte BufData[32];		// Buffer used to send and receive data
 byte crc;				// variable for calculated CRC value

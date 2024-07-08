@@ -60,7 +60,7 @@ struct bc7215FormatPkt_t
             byte c56k : 1;
             byte noCA : 1;
         } bits;
-        byte byte;
+        byte inByte;
     } signature;
     byte format[32];
 };
@@ -117,7 +117,7 @@ public:
 	static void setNOCA(bc7215FormatPkt_t& formatPkt);
 	static void clrNOCA(bc7215FormatPkt_t& formatPkt);
 
-	static byte crc8(byte* data, word len);
+	static byte crc8(const void* data, word len);
 	static word calSize(const bc7215DataVarPkt_t* dataPkt);
 	static word calSize(const bc7215DataMaxPkt_t& dataPkt);
 	static void copyDpkt(void* target, bc7215DataVarPkt_t* source);
