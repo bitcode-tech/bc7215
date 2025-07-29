@@ -53,7 +53,7 @@ void BC7215::setShutDown()
 	bc7215Status.cmdComplete = 0;
 }
 
-void BC7215::setRxMode(byte mode)
+void BC7215::setRxMode(uint8_t mode)
 {
 	if ((modPin == -1) || ((modPin >= 0) && (digitalRead(modPin) == HIGH)))	// if MOD is HIGH
 	{
@@ -74,7 +74,7 @@ void BC7215::clrData()
 	bc7215Status.dataPktReady = 0;
 }
 
-word BC7215::getLen()
+uint16_t BC7215::getLen()
 {
 	statusUpdate();
     if (bc7215Status.dataPktReady)
@@ -87,7 +87,7 @@ word BC7215::getLen()
     }
 }
 
-word BC7215::dpketSize()
+uint16_t BC7215::dpketSize()
 {
 	statusUpdate();
     if (bc7215Status.dataPktReady)
@@ -100,15 +100,15 @@ word BC7215::dpketSize()
     }
 }
 
-byte BC7215::getData(bc7215DataVarPkt_t* target)
+uint8_t BC7215::getData(bc7215DataVarPkt_t* target)
 {
 #	if BC7215_BUFFER_SIZE > 255
-	word i;
+	uint16_t i;
 #	else
-	byte i;
+	uint8_t i;
 #	endif
 	statusUpdate();
-    byte status = 0xff;
+    uint8_t status = 0xff;
     if (bc7215Status.dataPktReady)
     {
         status = bufBackRead(datEndPos, 2);
@@ -122,15 +122,15 @@ byte BC7215::getData(bc7215DataVarPkt_t* target)
 	return status;
 }
 
-byte BC7215::getData(bc7215DataMaxPkt_t& target)
+uint8_t BC7215::getData(bc7215DataMaxPkt_t& target)
 {
 	return getData(reinterpret_cast<bc7215DataVarPkt_t*>(&target));
 }
 
 
-word BC7215::getRaw(void* addr, word size)
+uint16_t BC7215::getRaw(void* addr, uint16_t size)
 {
-	word i;
+	uint16_t i;
 	statusUpdate();
 	if (bc7215Status.dataPktReady)
 	{
@@ -142,7 +142,7 @@ word BC7215::getRaw(void* addr, word size)
 
 	    for (i = 0; i < size; i++)
 	    {
-	        *((byte*)addr + i) = bufRead(datStartPos, i);
+	        *((uint8_t*)addr + i) = bufRead(datStartPos, i);
 	    }
 	}
 	else
@@ -165,10 +165,10 @@ void BC7215::clrFormat()
 	bc7215Status.formatPktReady = 0;
 }
 
-byte BC7215::getFormat(bc7215FormatPkt_t& target)
+uint8_t BC7215::getFormat(bc7215FormatPkt_t& target)
 {
-    byte i;
-    byte signature;
+    uint8_t i;
+    uint8_t signature;
 
 	statusUpdate();
     signature = 0xff;
@@ -188,9 +188,9 @@ byte BC7215::getFormat(bc7215FormatPkt_t& target)
 #	endif
 
 #if BC7215_BUFFER_SIZE > 255
-	byte BC7215::bufBackRead(word pos, word n)
+	uint8_t BC7215::bufBackRead(uint16_t pos, uint16_t n)
 #else
-	byte BC7215::bufBackRead(byte pos, byte n)
+	uint8_t BC7215::bufBackRead(uint8_t pos, uint8_t n)
 #endif
 {
     if (pos >= n)
@@ -204,9 +204,9 @@ byte BC7215::getFormat(bc7215FormatPkt_t& target)
 }
 
 #if BC7215_BUFFER_SIZE > 255
-	byte BC7215::bufRead(word pos, word n)
+	uint8_t BC7215::bufRead(uint16_t pos, uint16_t n)
 #else
-	byte BC7215::bufRead(byte pos, byte n)
+	uint8_t BC7215::bufRead(uint8_t pos, uint8_t n)
 #endif
 {
     if (pos + n >= BC7215_BUFFER_SIZE)
@@ -225,22 +225,22 @@ byte BC7215::getFormat(bc7215FormatPkt_t& target)
 
 void BC7215::loadFormat(const bc7215FormatPkt_t& source)
 {
-    byte i;
+    uint8_t i;
     if ((modPin == -2) || ((modPin >= 0) && (digitalRead(modPin) == LOW)))	// if MOD is LOW (bc7215 is in transmit mode)
     {
         sendOneByte(0xf6);
         sendOneByte(0x01);
         for (i = 0; i < sizeof(bc7215FormatPkt_t); i++)
         {
-            byteStuffingSend(*(reinterpret_cast<const byte*>(&source) + i));
+            byteStuffingSend(*(reinterpret_cast<const uint8_t*>(&source) + i));
         }
     }
 }
 
 void BC7215::irTx(const bc7215DataVarPkt_t* source)
 {
-    word i;
-    word bytes;
+    uint16_t i;
+    uint16_t bytes;
     if ((modPin == -2) || ((modPin >= 0) && (digitalRead(modPin) == LOW)))       // check if bc7215 is in trasmitting mode
     {
     	if ((source->bitLen >= 8) && (source->bitLen < 0x1000)) 
@@ -251,7 +251,7 @@ void BC7215::irTx(const bc7215DataVarPkt_t* source)
 		    bytes = sizeof(source->bitLen) + (source->bitLen + 7) / 8;        // set bytes = total number of data bytes +2
 		    for (i = 0; i < bytes; i++)                                       // send from 2nd byte of the data packet
 		    {
-		        byteStuffingSend(*((byte*)source + i));
+		        byteStuffingSend(*((uint8_t*)source + i));
 		    }
 		}
     }
@@ -262,9 +262,9 @@ void BC7215::irTx(const bc7215DataMaxPkt_t& source)
 	irTx(reinterpret_cast<const bc7215DataVarPkt_t*>(&source));
 }
 
-void BC7215::sendRaw(const void* source, word size)
+void BC7215::sendRaw(const void* source, uint16_t size)
 {
-    word i;
+    uint16_t i;
     if ((modPin == -2) || ((modPin >= 0) && (digitalRead(modPin) == LOW)))
     {
     	if (size < 0x200)
@@ -276,7 +276,7 @@ void BC7215::sendRaw(const void* source, word size)
 		    byteStuffingSend((size * 8) >> 8);
 		    for (i = 0; i < size; i++)
 		    {
-		        byteStuffingSend(*((byte*)source + i));
+		        byteStuffingSend(*((uint8_t*)source + i));
 		    }
 		}
     }
@@ -312,11 +312,11 @@ void BC7215::clrNOCA(bc7215FormatPkt_t& formatPkt)
 	formatPkt.signature.bits.noCA = 0;
 }
 
-byte BC7215::crc8(const void* data, word len)
+uint8_t BC7215::crc8(const void* data, uint16_t len)
 {
-    word i;
-    byte j;
-    byte crc = 0;
+    uint16_t i;
+    uint8_t j;
+    uint8_t crc = 0;
     for (i = 0; i < len; ++i)
     {
         crc ^= *(reinterpret_cast<const unsigned char*>(data) +i);
@@ -335,7 +335,7 @@ byte BC7215::crc8(const void* data, word len)
     return crc;
 }
 
-word BC7215::calSize(const bc7215DataVarPkt_t* dataPkt)
+uint16_t BC7215::calSize(const bc7215DataVarPkt_t* dataPkt)
 {
     if (dataPkt->bitLen < 0x1000)
     {
@@ -347,7 +347,7 @@ word BC7215::calSize(const bc7215DataVarPkt_t* dataPkt)
     }
 }
 
-word BC7215::calSize(const bc7215DataMaxPkt_t& dataPkt)
+uint16_t BC7215::calSize(const bc7215DataMaxPkt_t& dataPkt)
 {
 	return calSize(reinterpret_cast<const bc7215DataVarPkt_t*>(&dataPkt));
 }
@@ -355,20 +355,20 @@ word BC7215::calSize(const bc7215DataMaxPkt_t& dataPkt)
 
 void BC7215::copyDpkt(void* target, bc7215DataVarPkt_t* source)
 {
-    word i, totalLen;
+    uint16_t i, totalLen;
     totalLen = calSize(source);
     if ((void*)source > target)        // if source is located behind target in memory, copy from front to end
     {
         for (i = 0; i < totalLen; i++)
         {
-            *((byte*)target + i) = *((byte*)source + i);
+            *((uint8_t*)target + i) = *((uint8_t*)source + i);
         }
     }
     else if ((void*)source < target)        // if source is located before target in memory, copy from end to front
     {
         for (i = totalLen; i > 0; i--)
         {
-            *((byte*)target + i - 1) = *((byte*)source + i - 1);
+            *((uint8_t*)target + i - 1) = *((uint8_t*)source + i - 1);
         }
     }
 }
@@ -379,10 +379,10 @@ void BC7215::copyDpkt(void* target, bc7215DataMaxPkt_t& source)
 }
 
 
-bool BC7215::compareDpkt(byte sig, const bc7215DataVarPkt_t* pkt1, const bc7215DataVarPkt_t* pkt2)
+bool BC7215::compareDpkt(uint8_t sig, const bc7215DataVarPkt_t* pkt1, const bc7215DataVarPkt_t* pkt2)
 {
-    byte  i, bits, dat1, dat2;
-    word i16, len;
+    uint8_t  i, bits, dat1, dat2;
+    uint16_t i16, len;
 
     if (pkt1->bitLen != pkt2->bitLen)
     {
@@ -433,13 +433,13 @@ bool BC7215::compareDpkt(byte sig, const bc7215DataVarPkt_t* pkt1, const bc7215D
     return 1;
 }
 
-bool BC7215::compareDpkt(byte sig, const bc7215DataMaxPkt_t& pkt1, const bc7215DataMaxPkt_t& pkt2)
+bool BC7215::compareDpkt(uint8_t sig, const bc7215DataMaxPkt_t& pkt1, const bc7215DataMaxPkt_t& pkt2)
 {
 	return BC7215::compareDpkt(sig, reinterpret_cast<const bc7215DataVarPkt_t*>(&pkt1), reinterpret_cast<const bc7215DataVarPkt_t*>(&pkt2));
 }
 
 
-void BC7215::byteStuffingSend(byte data)
+void BC7215::byteStuffingSend(uint8_t data)
 {
     if ((data == 0x7a) || (data == 0x7b))
     {
@@ -453,7 +453,7 @@ void BC7215::byteStuffingSend(byte data)
 }
 
 
-void BC7215::sendOneByte(byte data)
+void BC7215::sendOneByte(uint8_t data)
 {
 	if (busyPin != -3)	// if BUSY is connected to arduino
 	{
@@ -471,12 +471,12 @@ void BC7215::statusUpdate()
 	}
 }
 
-void BC7215::processData(byte data)
+void BC7215::processData(uint8_t data)
 {
 #if ENABLE_RECEIVING == 1
-    static byte previousData = 0;
-    byte        temp;
-    word       temp16;
+    static uint8_t previousData = 0;
+    uint8_t        temp;
+    uint16_t       temp16;
 #endif
 
     if ((modPin == -2) || ((modPin >= 0) && (digitalRead(modPin) == LOW)))        // MOD=LOW means bc7215 is in transmit mode
@@ -506,7 +506,7 @@ void BC7215::processData(byte data)
                     if ((byteCount + datCount <= BC7215_BUFFER_SIZE) && (!(bufBackRead(datEndPos, 2) & 0x80)))
                     // if the format packet is not over writting the data packet and there is no error
                     {
-                        bitLen = ((word)bufBackRead(datEndPos, 0) << 8) | bufBackRead(datEndPos, 1);
+                        bitLen = ((uint16_t)bufBackRead(datEndPos, 0) << 8) | bufBackRead(datEndPos, 1);
                         bc7215Status.dataPktReady = 1;
                     }
                 }
@@ -515,7 +515,7 @@ void BC7215::processData(byte data)
                     if (!(bufBackRead(lastWritingPos, 2) & 0x80))
                     // if the buffer is not overflew and 'bit7' of the status byte the is not set (no error)
                     {
-                        temp16 = ((word)bufBackRead(lastWritingPos, 0) << 8) | bufBackRead(lastWritingPos, 1);
+                        temp16 = ((uint16_t)bufBackRead(lastWritingPos, 0) << 8) | bufBackRead(lastWritingPos, 1);
                         // get the bit count of the data packet
 
                         if ((temp16 + 7) / 8 + 3 == byteCount)        // if the byte count of received packet is correct
